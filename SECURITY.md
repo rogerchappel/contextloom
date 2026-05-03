@@ -2,26 +2,31 @@
 
 ## Supported Versions
 
-Replace this section with the supported versions for `contextloom`.
+`contextloom` is pre-1.0. Until the first tagged release, only the current `main` branch is supported for security fixes.
 
-Example:
-
-```md
 | Version | Supported |
 | --- | --- |
-| .x | Yes |
-| < .0 | No |
-```
-
-If the project does not publish versioned releases yet, say that clearly.
+| main | Best effort |
+| < 0.1.0 | No |
 
 ## Reporting a Vulnerability
 
 Please do not report suspected vulnerabilities in public issues, pull requests, or discussions.
 
-Ask maintainers for the private security reporting path before sharing details.
+Use GitHub private vulnerability reporting if it is enabled for the repository. If it is not enabled yet, open a public issue asking for a private reporting path, but do not include exploit details, secrets, personal data, or sensitive transcript excerpts.
 
-If no private reporting path exists yet, ask maintainers through public project channels for a private reporting path. Do not include exploit details, secrets, personal data, or sensitive technical details in public messages.
+## Project Security Boundaries
+
+`contextloom` is designed to be local-first:
+
+- No telemetry.
+- No hidden network calls.
+- No credential scraping.
+- No publishing or upload behavior.
+- Local reads are limited to the file or directory path the operator passes to the CLI/API.
+- Local writes are limited to the requested output directory.
+
+The generated manifest can contain excerpts from input files. Treat manifests as sensitive when the input transcript is sensitive.
 
 ## What to Include
 
@@ -33,25 +38,12 @@ When a private reporting path is available, include:
 - Potential impact.
 - Suggested mitigation, if known.
 
-## Response Expectations
-
-Maintainers review good-faith reports as capacity allows.
-
-Do not imply paid support, guaranteed response times, guaranteed fixes, or service-level agreements unless `contextloom` explicitly provides them.
-
-## Scope
-
-In scope:
-
-- Vulnerabilities in contextloom.
-- Insecure default configuration shipped by this project.
-- CI, release, or dependency guidance maintained by this project.
-
-Out of scope:
+## Out of Scope
 
 - General support requests.
 - Requests for guaranteed maintenance timelines.
-- Issues in unrelated downstream projects.
+- Vulnerabilities in unrelated downstream projects.
+- Sensitive information that came from input files intentionally processed by the operator, unless contextloom exposed it somewhere unexpected.
 
 ## Disclosure
 
