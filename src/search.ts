@@ -1,0 +1,5 @@
+import { tokenize } from './keywords.js';
+import type { Chunk, Manifest, SearchResult } from './types.js';
+export function searchManifest(manifest: Manifest, query: string, limit = 10): SearchResult[] { const terms = tokenize(query); if (terms.length === 0) return []; return manifest.chunks.map((chunk) => scoreChunk(chunk, terms)).filter((result) => result.score > 0).sort((a, b) => b.score - a.score || a.chunk.id.localeCompare(b.chunk.id)).slice(0, limit); }
+function scoreChunk(chunk: Chunk, terms: readonly string[]): SearchResult { const haystack = `${chunk.text}\n${chunk.keywords.join(' ')}\n${chunk.role ?? ''}`.toLowerCase(); const matches = terms.filter((term) => haystack.includes(term)); const exactBoost = terms.every((term) => haystack.includes(term)) ? 5 : 0; const keywordBoost = chunk.keywords.filter((keyword) => terms.includes(keyword)).length * 2; return { chunk, score: matches.length + exactBoost + keywordBoost, matches }; }
+export function findChunk(manifest: Manifest, id: string): Chunk | undefined { return manifest.chunks.find((chunk) => chunk.id === id || chunk.sha256.startsWith(id)); }
