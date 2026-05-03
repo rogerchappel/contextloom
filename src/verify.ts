@@ -1,0 +1,6 @@
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { sha256 } from './hash.js';
+import type { Manifest } from './types.js';
+export interface VerifyResult { readonly ok: boolean; readonly checkedChunks: number; readonly errors: readonly string[]; }
+export async function verifyManifest(manifest: Manifest): Promise<VerifyResult> { const errors: string[] = []; for (const source of manifest.sources) { try { const body = await fs.readFile(path.isAbsolute(source.path) ? source.path : path.join(manifest.inputRoot, source.relativePath), 'utf8'); if (sha256(body) !== source.sha256) errors.push(`source hash changed: ${source.relativePath}`); for (const chunk of manifest.chunks.filter((item) => item.sourceId === source.id)) { if (sha256(chunk.text) !== chunk.sha256) errors.push(`chunk hash mismatch: ${chunk.id}`); const exact = body.slice(chunk.citation.startOffset, chunk.citation.endOffset); if (exact !== chunk.text && !exact.includes(chunk.text) && !body.includes(chunk.text)) errors.push(`chunk text not recoverable from source: ${chunk.id}`); } } catch (error) { errors.push(`cannot read source ${source.relativePath}: ${error instanceof Error ? error.message : String(error)}`); } } return { ok: errors.length === 0, checkedChunks: manifest.chunks.length, errors }; }
