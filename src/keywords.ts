@@ -1,0 +1,4 @@
+const stopWords = new Set(['about', 'after', 'again', 'agent', 'also', 'and', 'because', 'been', 'before', 'being', 'between', 'context', 'could', 'from', 'have', 'into', 'just', 'like', 'local', 'more', 'need', 'only', 'that', 'the', 'then', 'there', 'this', 'tool', 'with', 'would', 'your']);
+export function tokenize(text: string): string[] { return text.toLowerCase().match(/[a-z0-9][a-z0-9_-]{1,}/gu)?.map(normalizeToken).filter((word) => !stopWords.has(word)) ?? []; }
+function normalizeToken(word: string): string { return word.length > 4 && word.endsWith('s') ? word.slice(0, -1) : word; }
+export function topKeywords(text: string, limit = 12): string[] { const counts = new Map<string, number>(); for (const token of tokenize(text)) counts.set(token, (counts.get(token) ?? 0) + 1); return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, limit).map(([word]) => word); }
