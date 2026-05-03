@@ -9,7 +9,10 @@ format and uses semantic versioning when versioned releases are published.
 
 ### Added
 
-- Initial project setup.
+- Initial TypeScript CLI/library implementation.
+- Deterministic local manifest generation for JSON, JSONL, Markdown, and text fixtures.
+- Fixture-backed tests, CLI smoke checks, and local validation workflow.
+- README, safety policy, design notes, manifest docs, and examples.
 
 ## Release Links
 
