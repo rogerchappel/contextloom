@@ -1,0 +1,3 @@
+{"timestamp":"2026-05-04T09:00:00Z","role":"user","content":"We need a local-first way to preserve agent session context. It must keep citations back to exact files and offsets."}
+{"timestamp":"2026-05-04T09:01:00Z","role":"assistant","content":"Decision: build a deterministic manifest with source hashes, chunk ids, line ranges, byte offsets, and searchable keywords. No telemetry or hidden network calls."}
+{"timestamp":"2026-05-04T09:03:00Z","role":"tool","content":"npm test passed on the fixture parser. CLI smoke should inspect fixtures/sample and verify the generated manifest."}
