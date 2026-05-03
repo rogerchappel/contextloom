@@ -60,6 +60,19 @@ Human decision needed:
 Next recommended task:
 ```
 
+## Local Development
+
+```sh
+npm install
+npm run check
+npm test
+npm run build
+npm run smoke
+bash scripts/validate.sh
+```
+
+Keep fixtures small and safe to publish. Do not commit private transcripts, credentials, or generated manifests from sensitive inputs.
+
 ## Verification
 
 Every contribution should include verification.
