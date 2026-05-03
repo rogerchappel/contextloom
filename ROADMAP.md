@@ -1,37 +1,35 @@
 # Roadmap
 
 This roadmap describes intended direction, not a binding delivery promise.
-Review it regularly and update it as the project learns from users,
-contributors, and implementation constraints.
 
 ## Now
 
-- Define the smallest useful project scope.
-- Keep repository setup, documentation, and verification easy for contributors
-  to follow.
-- Ship small, reviewable improvements.
+- Harden exact excerpt verification on more real transcript shapes.
+- Keep the CLI dependency-light, local-first, and easy to audit.
+- Improve examples around agent handoff, blockers, and decision retrieval.
 
 ## Next
 
-- Add the next capabilities that directly support the project's primary users.
-- Improve tests, docs, and examples around the most used workflows.
-- Reduce setup friction discovered during early use.
+- Add configurable chunk sizing and include/exclude globs.
+- Add richer Markdown reports for handoff packets.
+- Explore optional semantic retrieval as a separate, explicit add-on that never changes the local-first default.
 
 ## Later
 
-- Consider larger features after the core workflow is stable.
-- Add automation only where it removes repeated maintainer work.
-- Revisit packaging, deployment, or integration options based on real demand.
+- Editor integrations that read existing manifests.
+- Import adapters for specific agent transcript formats.
+- Release automation after the manual workflow is boring and reliable.
 
 ## Not Planned
 
-- Unrelated platform rewrites without a clear migration path.
-- Mandatory dependencies on a single ecosystem unless the project requires it.
-- Public release dates before maintainers are ready to commit to them.
+- Hidden telemetry or hosted indexing.
+- Automatic publishing or upload of transcripts.
+- Replacing the source transcript as the system of record.
+- Copying adjacent project names or implementations.
 
 ## Roadmap Review
 
-Before each major or meaningful minor release:
+Before each meaningful release:
 
 - Move completed user-visible work into `CHANGELOG.md`.
 - Remove stale commitments.
