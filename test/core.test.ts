@@ -11,10 +11,17 @@ test('inspect builds a deterministic manifest from fixtures', async () => {
   const manifest = await inspect({ input: fixture });
   assert.equal(manifest.version, 1);
   assert.equal(manifest.generatedAt, '1970-01-01T00:00:00.000Z');
-  assert.equal(manifest.stats.sourceCount, 2);
-  assert.ok(manifest.stats.chunkCount >= 4);
+  assert.equal(manifest.stats.sourceCount, 3);
+  assert.ok(manifest.stats.chunkCount >= 6);
   assert.ok(manifest.chunks.every((chunk) => chunk.citation.startLine >= 1));
   assert.ok(manifest.chunks.some((chunk) => chunk.text.includes('No telemetry')));
+});
+
+test('inspect extracts roles from json transcripts', async () => {
+  const manifest = await inspect({ input: fixture });
+  const branchChunk = manifest.chunks.find((chunk) => chunk.text.includes('branch protection blocker'));
+  assert.equal(branchChunk?.role, 'user');
+  assert.equal(branchChunk?.createdAt, '2026-05-04T09:05:00Z');
 });
 
 test('search finds cited deployment decisions', async () => {
