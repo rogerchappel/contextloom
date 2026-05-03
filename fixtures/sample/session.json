@@ -1,0 +1,14 @@
+{
+  "messages": [
+    {
+      "timestamp": "2026-05-04T09:05:00Z",
+      "role": "user",
+      "content": "Please keep the exact excerpt for the branch protection blocker. We need proof if GitHub rejects a rule update."
+    },
+    {
+      "timestamp": "2026-05-04T09:06:00Z",
+      "role": "assistant",
+      "content": "Branch protection status should be recorded as protected, skipped, or blocked with the command output."
+    }
+  ]
+}
