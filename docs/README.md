@@ -1,13 +1,21 @@
 # contextloom Documentation
 
-This directory holds project documentation.
+This directory holds planning and project documentation for `contextloom`.
 
-## Contents
+## Product and orchestration
 
+- [Product Requirements](PRD.md)
+- [Task Plan](TASKS.md)
+- [Orchestration Notes](ORCHESTRATION.md)
+
+## User and contributor references
+
+- [CLI Reference](CLI.md)
+- [Manifest Format](MANIFEST.md)
+- [Design Notes](DESIGN.md)
 - [Contributing guide](../CONTRIBUTING.md)
 - [Security policy](../SECURITY.md)
-- [Agent instructions](../AGENTS.md)
 
-## Additional docs
+## Generated metadata
 
-For a hosted documentation site, see the `docs-site/` directory if present.
+- [orchestration.json](orchestration.json)
