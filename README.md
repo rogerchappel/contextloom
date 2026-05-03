@@ -90,7 +90,7 @@ bash scripts/validate.sh
 
 ## Examples
 
-See [`examples/basic-usage.md`](examples/basic-usage.md) and [`fixtures/sample`](fixtures/sample) for a small agent handoff workflow.
+See [`examples/basic-usage.md`](examples/basic-usage.md), [`examples/library-api.ts`](examples/library-api.ts), and [`fixtures/sample`](fixtures/sample) for a small agent handoff workflow.
 
 ## Contributing
 
