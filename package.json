@@ -26,7 +26,8 @@
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "node --test dist/**/*.test.js",
     "pretest": "npm run build",
-    "smoke": "npm run build && node dist/src/cli.js inspect fixtures/sample --output out/sample --format json && node dist/src/cli.js search out/sample/manifest.json decisions --limit 3 && node dist/src/cli.js show out/sample/manifest.json chunk-0001 --format markdown && node dist/src/cli.js verify out/sample/manifest.json"
+    "smoke": "npm run build && node dist/src/cli.js inspect fixtures/sample --output out/sample --format json && node dist/src/cli.js search out/sample/manifest.json decisions --limit 3 && node dist/src/cli.js show out/sample/manifest.json chunk-0001 --format markdown && node dist/src/cli.js verify out/sample/manifest.json",
+    "release:check": "npm run check && npm test && npm run smoke && bash scripts/validate.sh && npm pack --dry-run"
   },
   "keywords": [
     "agent-context",
