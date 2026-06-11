@@ -103,3 +103,16 @@ See [SECURITY.md](SECURITY.md). Please do not put private transcript excerpts or
 ## License
 
 MIT
+
+## Development
+
+Run the same checks locally before opening a change:
+
+```sh
+npm ci
+npm run check
+npm run build
+npm test
+npm run smoke
+npm run release:check
+```
