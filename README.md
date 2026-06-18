@@ -116,3 +116,14 @@ npm test
 npm run smoke
 npm run release:check
 ```
+
+## Release readiness
+
+Run the release gate before tagging or publishing:
+
+```sh
+npm run release:check
+npm pack --dry-run
+```
+
+The package smoke check prints the tarball contents so missing runtime files are caught before release.
