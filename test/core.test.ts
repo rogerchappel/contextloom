@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { inspect, searchManifest, findChunk, verifyManifest } from '../src/index.js';
@@ -46,6 +46,40 @@ test('written manifests verify against original sources', async () => {
     const result = await verifyManifest(manifest);
     assert.equal(result.ok, true);
     assert.equal(result.checkedChunks, manifest.stats.chunkCount);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
+test('json citations track escaped content across chunks', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-json-'));
+  try {
+    const source = JSON.stringify({ messages: [{ role: 'user', content: 'first line\nquoted "value" and \\path' }] }, null, 2);
+    await writeFile(path.join(tmp, 'escaped.json'), source);
+    const manifest = await inspect({ input: tmp, maxChunkLines: 1 });
+    assert.equal(manifest.chunks.length, 2);
+    for (const chunk of manifest.chunks) {
+      const raw = source.slice(chunk.citation.startOffset, chunk.citation.endOffset);
+      assert.equal(JSON.parse(`"${raw}"`), chunk.text);
+      assert.equal(chunk.citation.startLine, chunk.citation.endLine);
+    }
+    assert.equal((await verifyManifest(manifest)).ok, true);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
+test('verification rejects incorrect json citation offsets', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-json-'));
+  try {
+    const source = JSON.stringify({ messages: [{ content: 'escaped\ncontent' }] }, null, 2);
+    await writeFile(path.join(tmp, 'escaped.json'), source);
+    const manifest = await inspect({ input: tmp });
+    const chunk = manifest.chunks[0]!;
+    const invalid = { ...manifest, chunks: [{ ...chunk, citation: { ...chunk.citation, startOffset: chunk.citation.startOffset - 1 } }] };
+    const result = await verifyManifest(invalid);
+    assert.equal(result.ok, false);
+    assert.match(result.errors.join('\n'), /citation does not match source/);
   } finally {
     await rm(tmp, { recursive: true, force: true });
   }
