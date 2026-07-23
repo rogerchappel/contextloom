@@ -31,3 +31,19 @@ test('cli inspect/search/show/verify work against a real fixture', async () => {
     await rm(tmp, { recursive: true, force: true });
   }
 });
+
+test('cli search rejects invalid limit values', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-cli-limit-'));
+  try {
+    const inspect = spawnSync(process.execPath, [cli, 'inspect', fixture, '--output', tmp], { encoding: 'utf8' });
+    assert.equal(inspect.status, 0, inspect.stderr);
+    const manifest = path.join(tmp, 'manifest.json');
+    for (const args of [['--limit'], ['--limit', 'nope'], ['--limit', '0'], ['--limit=-1'], ['--limit', '1.5']]) {
+      const search = spawnSync(process.execPath, [cli, 'search', manifest, 'deployment', ...args], { encoding: 'utf8' });
+      assert.notEqual(search.status, 0, `expected ${args.join(' ')} to fail`);
+      assert.match(search.stderr, /--limit requires a positive integer/);
+    }
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
