@@ -38,6 +38,10 @@ node dist/src/cli.js verify out/sample/manifest.json
 - `manifest.json` — machine-readable chunks, citations, hashes, and stats.
 - `manifest.md` — a human skim table.
 
+When `--output` is inside the input directory, `inspect` excludes that output
+directory from its sources. Repeating the command therefore does not index its
+previously generated manifests.
+
 ## CLI
 
 ```text
@@ -52,6 +56,9 @@ Supported local input formats in the MVP:
 - `.jsonl` transcript/event rows with `role`, `content`/`text`/`message`, and optional `timestamp`.
 - `.json` arrays or objects containing `messages`, `turns`, `events`, or `transcript`.
 - `.md`, `.markdown`, and `.txt` notes/logs.
+
+`search --limit` accepts a positive integer. Invalid, zero, negative, or missing
+values are rejected instead of falling back to a default.
 
 ## Library API
 
