@@ -51,6 +51,23 @@ test('written manifests verify against original sources', async () => {
   }
 });
 
+test('inspect excludes a nested output directory on repeated runs', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-nested-output-'));
+  try {
+    await writeFile(path.join(tmp, 'notes.md'), '# Stable source\n');
+    const output = path.join(tmp, 'generated', 'context');
+    const first = await inspect({ input: tmp, output });
+    const second = await inspect({ input: tmp, output });
+    assert.deepEqual(second.sources, first.sources);
+    assert.deepEqual(second.chunks, first.chunks);
+    assert.deepEqual(second.stats, first.stats);
+    assert.equal(second.stats.sourceCount, 1);
+    assert.equal(second.sources[0]?.relativePath, 'notes.md');
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
 test('json citations track escaped content across chunks', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-json-'));
   try {
