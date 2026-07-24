@@ -10,6 +10,10 @@ contextloom inspect <input> --output out/sample --format markdown
 
 Reads a local file or directory and writes a deterministic manifest. Supported source files are `.json`, `.jsonl`, `.md`, `.markdown`, and `.txt`.
 
+If the requested output directory is nested under the input directory,
+`contextloom` excludes that output directory from inspection. Consecutive runs
+against unchanged input therefore produce the same sources and chunks.
+
 ## search
 
 ```sh
@@ -17,6 +21,9 @@ contextloom search out/sample/manifest.json "deployment decision" --limit 3
 ```
 
 Performs lightweight local keyword retrieval over chunk text, roles, and extracted keywords. Search is deliberately dependency-free in the MVP.
+
+`--limit` is optional and defaults to `10`. When supplied, its value must be a
+positive integer, such as `--limit 3` or `--limit=3`.
 
 ## show
 
