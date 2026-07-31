@@ -2,6 +2,11 @@
 
 `contextloom` keeps the command surface intentionally small.
 
+Options may be written as `--name value` or `--name=value`. Each command only
+accepts the options shown below, and every option requires a value. Format
+values are `json` and `markdown`. Invalid options, missing values, unsupported
+formats, and extra positional arguments exit nonzero and print the usage guide.
+
 ## inspect
 
 ```sh
@@ -24,6 +29,8 @@ Performs lightweight local keyword retrieval over chunk text, roles, and extract
 
 `--limit` is optional and defaults to `10`. When supplied, its value must be a
 positive integer, such as `--limit 3` or `--limit=3`.
+Queries containing spaces must be passed as one quoted argument, as in the
+example above.
 
 ## show
 
