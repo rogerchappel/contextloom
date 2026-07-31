@@ -45,7 +45,7 @@ test('cli search rejects invalid limit values', async () => {
     for (const args of [['--limit'], ['--limit', 'nope'], ['--limit', '0'], ['--limit=-1'], ['--limit', '1.5']]) {
       const search = run('search', manifest, 'deployment', ...args);
       assert.notEqual(search.status, 0, `expected ${args.join(' ')} to fail`);
-      assert.match(search.stderr, /--limit requires a positive integer/);
+      assert.match(search.stderr, args[0] === '--limit' && args.length === 1 ? /--limit requires a value/ : /--limit requires a positive integer/);
     }
   } finally {
     await rm(tmp, { recursive: true, force: true });
