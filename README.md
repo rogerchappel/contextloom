@@ -60,6 +60,13 @@ Supported local input formats in the MVP:
 `search --limit` accepts a positive integer. Invalid, zero, negative, or missing
 values are rejected instead of falling back to a default.
 
+CLI options accept both `--name value` and `--name=value`. Only the options
+shown for each command are accepted, and every option requires a value.
+`--format` is limited to `json` or `markdown`. Unknown options, missing values,
+unsupported formats, and extra positional arguments exit nonzero with usage
+guidance. Quote a multi-word search query so it remains one positional
+argument.
+
 ## Library API
 
 ```ts
