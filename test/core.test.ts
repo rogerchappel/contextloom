@@ -101,3 +101,42 @@ test('verification rejects incorrect json citation offsets', async () => {
     await rm(tmp, { recursive: true, force: true });
   }
 });
+
+test('jsonl citations track escaped content across chunks', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-jsonl-'));
+  try {
+    const messages = [
+      { role: 'user', content: 'first line\nquoted "value" and \\path' },
+      { role: 'assistant', text: 'snowman: \u2603' }
+    ];
+    const source = `${messages.map((message) => JSON.stringify(message)).join('\n')}\n`.replace('☃', '\\u2603');
+    await writeFile(path.join(tmp, 'escaped.jsonl'), source);
+    const manifest = await inspect({ input: tmp, maxChunkLines: 1 });
+    assert.equal(manifest.chunks.length, 3);
+    assert.notEqual(manifest.chunks[0]?.citation.startOffset, manifest.chunks[1]?.citation.startOffset);
+    for (const chunk of manifest.chunks) {
+      const raw = source.slice(chunk.citation.startOffset, chunk.citation.endOffset);
+      assert.equal(JSON.parse(`"${raw}"`), chunk.text);
+      assert.equal(chunk.citation.startLine, chunk.citation.endLine);
+    }
+    assert.equal((await verifyManifest(manifest)).ok, true);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
+test('verification rejects incorrect jsonl citation offsets', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-jsonl-'));
+  try {
+    const source = `${JSON.stringify({ content: 'escaped\ncontent' })}\n`;
+    await writeFile(path.join(tmp, 'escaped.jsonl'), source);
+    const manifest = await inspect({ input: tmp });
+    const chunk = manifest.chunks[0]!;
+    const invalid = { ...manifest, chunks: [{ ...chunk, citation: { ...chunk.citation, endOffset: chunk.citation.endOffset + 1 } }] };
+    const result = await verifyManifest(invalid);
+    assert.equal(result.ok, false);
+    assert.match(result.errors.join('\n'), /citation does not match source/);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
