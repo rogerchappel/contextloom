@@ -22,7 +22,7 @@ Each chunk citation includes:
 - `startOffset`
 - `endOffset`
 
-Offsets are JavaScript string offsets for the UTF-8-decoded source text. The source hash preserves whole-file integrity.
+Offsets are JavaScript string offsets for the UTF-8-decoded source text. For string-valued JSON and JSONL transcript fields, they delimit the encoded string contents in the source: decode that raw slice as a JSON string to recover the chunk text. This keeps citations exact even when a chunk contains JSON escapes such as `\\n`, `\\"`, `\\\\`, or `\\u2603`. The source hash preserves whole-file integrity.
 
 ## Stability
 
