@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
@@ -66,6 +66,26 @@ test('cli search rejects invalid limit values', async () => {
       assert.notEqual(search.status, 0, `expected ${args.join(' ')} to fail`);
       assert.match(search.stderr, args[0] === '--limit' && args.length === 1 ? /--limit requires a value/ : /--limit requires a positive integer/);
     }
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
+test('cli show rejects ambiguous hash prefixes with a clear diagnostic', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-cli-prefix-'));
+  try {
+    const inspect = run('inspect', fixture, `--output=${tmp}`, '--format=json');
+    assert.equal(inspect.status, 0, inspect.stderr);
+    const manifestPath = path.join(tmp, 'manifest.json');
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    manifest.chunks[0].sha256 = 'abc111';
+    manifest.chunks[1].sha256 = 'abc222';
+    await writeFile(manifestPath, JSON.stringify(manifest));
+
+    const ambiguous = run('show', manifestPath, 'abc', '--format=json');
+    assert.notEqual(ambiguous.status, 0);
+    assert.match(ambiguous.stderr, /ambiguous chunk hash prefix: abc matches 2 chunks/);
+    assert.equal(ambiguous.stdout, '');
   } finally {
     await rm(tmp, { recursive: true, force: true });
   }
