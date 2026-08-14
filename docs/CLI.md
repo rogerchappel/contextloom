@@ -40,7 +40,10 @@ example above.
 contextloom show out/sample/manifest.json chunk-0001
 ```
 
-Prints an exact chunk and its citation. A chunk hash prefix also works when it is unique enough for the current manifest.
+Prints an exact chunk and its citation. A chunk hash prefix also works when it
+matches exactly one chunk in the current manifest. Ambiguous prefixes fail with
+a diagnostic instead of selecting an arbitrary chunk; use more hash characters
+to disambiguate them.
 
 ## verify
 
