@@ -86,6 +86,46 @@ test('json citations track escaped content across chunks', async () => {
   }
 });
 
+test('json transcripts preserve mixed structured message content and citations', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-structured-json-'));
+  try {
+    const source = JSON.stringify({ messages: [
+      { role: 'user', content: 'escaped "question"' },
+      { role: 'assistant', content: [{ type: 'text', text: 'array answer' }, 'tail'] },
+      { role: 'tool', content: { text: 'object result', ok: true } }
+    ] }, null, 2);
+    await writeFile(path.join(tmp, 'structured.json'), source);
+    const first = await inspect({ input: tmp });
+    const second = await inspect({ input: tmp });
+    assert.deepEqual(second.chunks, first.chunks);
+    assert.deepEqual(first.chunks.map((chunk) => chunk.role), ['user', 'assistant', 'tool']);
+    assert.match(first.chunks[1]!.text, /array answer/);
+    assert.match(first.chunks[2]!.text, /object result/);
+    for (const chunk of first.chunks) assert.ok(source.slice(chunk.citation.startOffset, chunk.citation.endOffset).length > 0);
+    assert.equal((await verifyManifest(first)).ok, true);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
+test('jsonl transcripts preserve array and object message content', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-structured-jsonl-'));
+  try {
+    const source = [
+      { role: 'user', content: ['first', { type: 'text', text: 'second' }] },
+      { role: 'assistant', content: { text: 'third', escaped: 'a\\b' } }
+    ].map((message) => JSON.stringify(message)).join('\n') + '\n';
+    await writeFile(path.join(tmp, 'structured.jsonl'), source);
+    const manifest = await inspect({ input: tmp });
+    assert.equal(manifest.chunks.length, 2);
+    assert.match(manifest.chunks[0]!.text, /second/);
+    assert.match(manifest.chunks[1]!.text, /a\\\\b/);
+    assert.equal((await verifyManifest(manifest)).ok, true);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
 test('verification rejects incorrect json citation offsets', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-json-'));
   try {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
@@ -31,6 +31,25 @@ test('cli inspect/search/show/verify work against a real fixture', async () => {
     const verify = run('verify', manifest, '--format=markdown');
     assert.equal(verify.status, 0, verify.stderr);
     assert.match(verify.stdout, /Verified/);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
+test('packed cli inspects and verifies structured transcript content', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-cli-structured-'));
+  try {
+    const input = path.join(tmp, 'input');
+    const output = path.join(tmp, 'output');
+    await import('node:fs/promises').then(({ mkdir }) => mkdir(input));
+    await writeFile(path.join(input, 'messages.jsonl'), `${JSON.stringify({ content: [{ type: 'text', text: 'packed array' }] })}\n${JSON.stringify({ content: { text: 'packed object' } })}\n`);
+    const inspect = run('inspect', input, '--output', output, '--format=json');
+    assert.equal(inspect.status, 0, inspect.stderr);
+    assert.match(inspect.stdout, /packed array/);
+    assert.match(inspect.stdout, /packed object/);
+    const verify = run('verify', path.join(output, 'manifest.json'), '--format=json');
+    assert.equal(verify.status, 0, verify.stderr);
+    assert.match(verify.stdout, /"ok": true/);
   } finally {
     await rm(tmp, { recursive: true, force: true });
   }

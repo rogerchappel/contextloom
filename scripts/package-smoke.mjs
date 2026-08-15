@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -46,7 +46,24 @@ try {
     throw new Error(`packed CLI did not reject an unsupported format:\n${invalid.stderr}`);
   }
 
-  console.log(`${packageJson.name} package smoke passed with ${packument.files.length} packed file(s) and strict CLI validation.`);
+  const structuredInput = path.join(temporaryDirectory, "structured-input");
+  const structuredOutput = path.join(temporaryDirectory, "structured-output");
+  await mkdir(structuredInput);
+  await writeFile(path.join(structuredInput, "messages.jsonl"), [
+    JSON.stringify({ role: "user", content: "escaped \"string\"" }),
+    JSON.stringify({ role: "assistant", content: [{ type: "text", text: "array content" }] }),
+    JSON.stringify({ role: "tool", content: { text: "object content", ok: true } }),
+  ].join("\n") + "\n");
+  const inspected = spawnSync(process.execPath, [packagedCli, "inspect", structuredInput, "--output", structuredOutput, "--format", "json"], { encoding: "utf8" });
+  if (inspected.status !== 0 || !/array content/.test(inspected.stdout) || !/object content/.test(inspected.stdout)) {
+    throw new Error(`packed CLI did not index structured transcript content:\n${inspected.stderr}`);
+  }
+  const verified = spawnSync(process.execPath, [packagedCli, "verify", path.join(structuredOutput, "manifest.json"), "--format", "json"], { encoding: "utf8" });
+  if (verified.status !== 0 || !/"ok": true/.test(verified.stdout)) {
+    throw new Error(`packed CLI did not verify structured transcript citations:\n${verified.stderr}`);
+  }
+
+  console.log(`${packageJson.name} package smoke passed with ${packument.files.length} packed file(s), strict CLI validation, and structured transcript verification.`);
 } finally {
   await rm(temporaryDirectory, { recursive: true, force: true });
 }
