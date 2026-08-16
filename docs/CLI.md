@@ -15,6 +15,8 @@ contextloom inspect <input> --output out/sample --format markdown
 
 Reads a local file or directory and writes a deterministic manifest. Supported source files are `.json`, `.jsonl`, `.md`, `.markdown`, and `.txt`.
 
+JSON transcript containers may use `messages`, `turns`, `events`, or `transcript`; JSONL accepts one message/event per row. The `content`, `text`, or `message` value may be a string, an array of strings/content-part objects, or an object. Structured values are converted deterministically to text while citations cover their encoded JSON source range.
+
 If the requested output directory is nested under the input directory,
 `contextloom` excludes that output directory from inspection. Consecutive runs
 against unchanged input therefore produce the same sources and chunks.

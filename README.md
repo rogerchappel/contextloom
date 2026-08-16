@@ -53,8 +53,8 @@ contextloom verify <manifest.json> [--format json|markdown]
 
 Supported local input formats in the MVP:
 
-- `.jsonl` transcript/event rows with `role`, `content`/`text`/`message`, and optional `timestamp`.
-- `.json` arrays or objects containing `messages`, `turns`, `events`, or `transcript`.
+- `.jsonl` transcript/event rows with `role`, `content`/`text`/`message`, and optional `timestamp`; message content may be a string, an array of strings/content parts, or an object.
+- `.json` arrays or objects containing `messages`, `turns`, `events`, or `transcript`, with the same string, array, and object content shapes.
 - `.md`, `.markdown`, and `.txt` notes/logs.
 
 `search --limit` accepts a positive integer. Invalid, zero, negative, or missing
