@@ -32,11 +32,27 @@ test('search finds cited deployment decisions', async () => {
   assert.ok(results[0]!.chunk.citation.sourcePath);
 });
 
-test('findChunk supports stable chunk ids and hash prefixes', async () => {
+test('findChunk resolves exact ids and unique hash prefixes', async () => {
   const manifest = await inspect({ input: fixture });
   const first = manifest.chunks[0]!;
   assert.equal(findChunk(manifest, first.id)?.id, first.id);
   assert.equal(findChunk(manifest, first.sha256.slice(0, 12))?.id, first.id);
+  assert.equal(findChunk(manifest, 'missing'), undefined);
+});
+
+test('findChunk rejects ambiguous hash prefixes without shadowing exact ids', async () => {
+  const manifest = await inspect({ input: fixture });
+  const [first, second] = manifest.chunks;
+  assert.ok(first && second);
+  const ambiguous = {
+    ...manifest,
+    chunks: [
+      { ...first, sha256: 'abc111' },
+      { ...second, id: 'abc', sha256: 'abc222' },
+    ],
+  };
+  assert.equal(findChunk(ambiguous, 'abc')?.id, 'abc');
+  assert.throws(() => findChunk({ ...ambiguous, chunks: ambiguous.chunks.map((chunk, index) => index === 1 ? { ...chunk, id: 'other' } : chunk) }, 'abc'), /ambiguous chunk hash prefix: abc matches 2 chunks/);
 });
 
 test('written manifests verify against original sources', async () => {
