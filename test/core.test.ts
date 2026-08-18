@@ -196,3 +196,25 @@ test('verification rejects incorrect jsonl citation offsets', async () => {
     await rm(tmp, { recursive: true, force: true });
   }
 });
+
+test('citations use UTF-8 byte offsets for multibyte source content', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-utf8-offsets-'));
+  try {
+    const sources = new Map([
+      ['session.json', JSON.stringify({ messages: [{ content: '😀 café\n第二段' }] }, null, 2)],
+      ['session.jsonl', `${JSON.stringify({ content: 'préface 😀\n漢字' })}\n`],
+      ['notes.txt', 'é before\n😀 café\n漢字 after\n'],
+    ]);
+    for (const [name, source] of sources) await writeFile(path.join(tmp, name), source);
+    const manifest = await inspect({ input: tmp, maxChunkLines: 1 });
+    for (const chunk of manifest.chunks) {
+      const source = sources.get(chunk.sourcePath)!;
+      const raw = Buffer.from(source).subarray(chunk.citation.startOffset, chunk.citation.endOffset).toString('utf8');
+      if (chunk.kind === 'text') assert.equal(raw, chunk.text);
+      else assert.equal(JSON.parse(`"${raw}"`), chunk.text);
+    }
+    assert.equal((await verifyManifest(manifest)).ok, true);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
