@@ -2,6 +2,8 @@
 
 A local-first context manager for agent sessions. It turns transcripts, notes, and tool traces into a deterministic manifest of retrievable chunks with citations back to exact files, line ranges, byte offsets, and hashes.
 
+Citation offsets are zero-based, half-open UTF-8 byte offsets into the original source file. Read the source as bytes and select `[startOffset, endOffset)` to recover the cited representation.
+
 Think of it as a small loom for long context: feed it local files, get back a plain JSON index another agent, CLI, or editor plugin can trust.
 
 ## Why
