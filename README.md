@@ -79,6 +79,13 @@ const results = searchManifest(manifest, 'deployment decision', 3);
 const verified = await verifyManifest(manifest);
 ```
 
+Directory inputs can be filtered with `include`. Patterns use `/`-separated paths relative to the input root: `*` and `?` do not cross a directory separator, while `**` does. A pattern without `/` matches a file name at any depth. Single-file inputs match against their file name. An empty array includes no files.
+
+```ts
+const markdown = await inspect({ input: 'fixtures/sample', include: ['*.md'] });
+const nestedJson = await inspect({ input: 'fixtures/sample', include: ['records/**/*.json'] });
+```
+
 ## Safety boundaries
 
 `contextloom` is intentionally boring and local-first:
