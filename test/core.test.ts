@@ -17,6 +17,23 @@ test('inspect builds a deterministic manifest from fixtures', async () => {
   assert.ok(manifest.chunks.some((chunk) => chunk.text.includes('No telemetry')));
 });
 
+test('inspect include patterns filter directory and single-file inputs', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-include-'));
+  try {
+    await writeFile(path.join(tmp, 'notes.md'), '# Notes\n');
+    await writeFile(path.join(tmp, 'session.json'), JSON.stringify({ content: 'json' }));
+    await writeFile(path.join(tmp, 'events.jsonl'), `${JSON.stringify({ content: 'jsonl' })}\n`);
+
+    assert.deepEqual((await inspect({ input: tmp, include: ['*.md'] })).sources.map((source) => source.relativePath), ['notes.md']);
+    assert.deepEqual((await inspect({ input: tmp, include: ['*.json', '*.jsonl'] })).sources.map((source) => source.relativePath), ['events.jsonl', 'session.json']);
+    assert.equal((await inspect({ input: tmp, include: [] })).stats.sourceCount, 0);
+    assert.equal((await inspect({ input: path.join(tmp, 'notes.md'), include: ['*.md'] })).stats.sourceCount, 1);
+    assert.equal((await inspect({ input: path.join(tmp, 'notes.md'), include: ['*.json'] })).stats.sourceCount, 0);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
 test('inspect extracts roles from json transcripts', async () => {
   const manifest = await inspect({ input: fixture });
   const branchChunk = manifest.chunks.find((chunk) => chunk.text.includes('branch protection blocker'));
