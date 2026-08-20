@@ -235,3 +235,27 @@ test('citations use UTF-8 byte offsets for multibyte source content', async () =
     await rm(tmp, { recursive: true, force: true });
   }
 });
+
+test('maxChunkChars splits overlong lines with exact UTF-8 byte citations', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-long-line-'));
+  try {
+    const source = 'prefix 😀 café 漢字 suffix';
+    await writeFile(path.join(tmp, 'long.txt'), source);
+    const manifest = await inspect({ input: tmp, maxChunkChars: 7 });
+
+    assert.ok(manifest.chunks.length > 1);
+    assert.ok(manifest.chunks.every((chunk) => chunk.text.length <= 7));
+    for (const [index, chunk] of manifest.chunks.entries()) {
+      const recovered = Buffer.from(source)
+        .subarray(chunk.citation.startOffset, chunk.citation.endOffset)
+        .toString('utf8');
+      assert.equal(recovered, chunk.text);
+      if (index > 0) assert.ok(chunk.citation.startOffset >= manifest.chunks[index - 1]!.citation.endOffset);
+      assert.equal(chunk.citation.startLine, 1);
+      assert.equal(chunk.citation.endLine, 1);
+    }
+    assert.equal((await verifyManifest(manifest)).ok, true);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
