@@ -22,7 +22,19 @@ Each chunk citation includes:
 - `startOffset`
 - `endOffset`
 
-Offsets are JavaScript string offsets for the UTF-8-decoded source text. For string-valued JSON and JSONL transcript fields, they delimit the encoded string contents in the source: decode that raw slice as a JSON string to recover the chunk text. For array- or object-valued content, they delimit the complete encoded JSON value, which deterministically produces the cited chunk text. This keeps citations exact even when content contains JSON escapes such as `\\n`, `\\"`, `\\\\`, or `\\u2603`. The source hash preserves whole-file integrity.
+`startOffset` and `endOffset` are zero-based, half-open UTF-8 byte offsets into the original source file. Read the source as bytes rather than slicing a JavaScript string:
+
+```js
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+
+const source = await readFile(resolve(manifest.inputRoot, chunk.citation.sourcePath));
+const cited = source
+  .subarray(chunk.citation.startOffset, chunk.citation.endOffset)
+  .toString('utf8');
+```
+
+For string-valued JSON and JSONL transcript fields, the offsets delimit the encoded string contents in the source: decode `cited` as a JSON string to recover the chunk text. For array- or object-valued content, they delimit the complete encoded JSON value, which deterministically produces the cited chunk text. This keeps citations exact even when content contains JSON escapes such as `\\n`, `\\"`, `\\\\`, or `\\u2603`, and when decoded text contains multibyte characters. The source hash preserves whole-file integrity.
 
 ## Stability
 
