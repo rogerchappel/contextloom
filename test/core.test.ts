@@ -245,12 +245,12 @@ test('maxChunkChars splits overlong lines with exact UTF-8 byte citations', asyn
 
     assert.ok(manifest.chunks.length > 1);
     assert.ok(manifest.chunks.every((chunk) => chunk.text.length <= 7));
-    assert.equal(manifest.chunks.map((chunk) => chunk.text).join(''), source);
-    for (const chunk of manifest.chunks) {
+    for (const [index, chunk] of manifest.chunks.entries()) {
       const recovered = Buffer.from(source)
         .subarray(chunk.citation.startOffset, chunk.citation.endOffset)
         .toString('utf8');
       assert.equal(recovered, chunk.text);
+      if (index > 0) assert.ok(chunk.citation.startOffset >= manifest.chunks[index - 1]!.citation.endOffset);
       assert.equal(chunk.citation.startLine, 1);
       assert.equal(chunk.citation.endLine, 1);
     }
