@@ -4,8 +4,10 @@
 
 Options may be written as `--name value` or `--name=value`. Each command only
 accepts the options shown below, and every option requires a value. Format
-values are `json` and `markdown`. Invalid options, missing values, unsupported
-formats, and extra positional arguments exit nonzero and print the usage guide.
+values are `json` and `markdown`. An option may only be supplied once, including
+across mixed `--name value` and `--name=value` forms. Invalid options, missing
+values, duplicate options, unsupported formats, and extra positional arguments
+exit nonzero and print the usage guide.
 
 ## inspect
 
