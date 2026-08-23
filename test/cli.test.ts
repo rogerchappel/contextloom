@@ -115,6 +115,27 @@ test('cli rejects missing option values with usage guidance', () => {
   }
 });
 
+test('cli rejects duplicate options before reading inputs or writing output', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-cli-duplicate-'));
+  try {
+    const output = path.join(tmp, 'must-not-exist');
+    for (const args of [
+      ['inspect', fixture, '--output', output, `--output=${output}-other`],
+      ['inspect', fixture, '--format=json', '--format', 'markdown'],
+      ['search', path.join(tmp, 'missing.json'), 'query', '--limit', '1', '--limit=2'],
+    ]) {
+      const result = run(...args);
+      assert.notEqual(result.status, 0, `expected ${args.join(' ')} to fail`);
+      assert.match(result.stderr, /--(?:output|format|limit) may only be specified once/);
+      assert.match(result.stderr, /Usage:/);
+    }
+    await assert.rejects(readFile(output), { code: 'ENOENT' });
+    await assert.rejects(readFile(`${output}-other`), { code: 'ENOENT' });
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
 test('cli rejects unexpected positional arguments with usage guidance', () => {
   const result = run('inspect', fixture, 'extra-positional');
   assert.notEqual(result.status, 0);
