@@ -36,6 +36,31 @@ test('cli inspect/search/show/verify work against a real fixture', async () => {
   }
 });
 
+test('cli renders single-file citations in JSON and Markdown', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-cli-single-file-'));
+  try {
+    const input = path.join(fixture, 'notes.md');
+    const inspect = run('inspect', input, `--output=${tmp}`, '--format=json');
+    assert.equal(inspect.status, 0, inspect.stderr);
+    assert.match(inspect.stdout, /"relativePath": "notes\.md"/);
+    assert.match(inspect.stdout, /"sourcePath": "notes\.md"/);
+
+    const manifest = path.join(tmp, 'manifest.json');
+    assert.match(await readFile(path.join(tmp, 'manifest.md'), 'utf8'), /notes\.md:\d+-\d+/);
+    const search = run('search', manifest, 'deployment', '--format=markdown');
+    assert.equal(search.status, 0, search.stderr);
+    assert.match(search.stdout, /Citation: notes\.md:\d+-\d+/);
+    const show = run('show', manifest, 'chunk-0001', '--format=markdown');
+    assert.equal(show.status, 0, show.stderr);
+    assert.match(show.stdout, /Citation: notes\.md:\d+-\d+/);
+    const verify = run('verify', manifest, '--format=json');
+    assert.equal(verify.status, 0, verify.stderr);
+    assert.match(verify.stdout, /"ok": true/);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
 test('packed cli inspects and verifies structured transcript content', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-cli-structured-'));
   try {

@@ -34,6 +34,17 @@ test('inspect include patterns filter directory and single-file inputs', async (
   }
 });
 
+test('inspect preserves single-file paths in sources and citations', async () => {
+  const input = path.join(fixture, 'notes.md');
+  const manifest = await inspect({ input });
+
+  assert.equal(manifest.sources[0]?.relativePath, 'notes.md');
+  assert.ok(manifest.chunks.length > 0);
+  assert.ok(manifest.chunks.every((chunk) => chunk.sourcePath === 'notes.md'));
+  assert.ok(manifest.chunks.every((chunk) => chunk.citation.sourcePath === 'notes.md'));
+  assert.equal((await verifyManifest(manifest)).ok, true);
+});
+
 test('inspect extracts roles from json transcripts', async () => {
   const manifest = await inspect({ input: fixture });
   const branchChunk = manifest.chunks.find((chunk) => chunk.text.includes('branch protection blocker'));
