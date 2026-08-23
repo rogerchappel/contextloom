@@ -53,6 +53,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs | undefined {
     const equals = arg.indexOf('=');
     const key = arg.slice(2, equals === -1 ? undefined : equals);
     if (!commandOptions[command].has(key)) throw new UsageError(`unknown option: --${key}`);
+    if (Object.hasOwn(flags, key)) throw new UsageError(`--${key} may only be specified once`);
 
     const inlineValue = equals === -1 ? undefined : arg.slice(equals + 1);
     const nextValue = rest[index + 1];
