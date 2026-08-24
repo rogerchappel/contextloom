@@ -170,6 +170,32 @@ test('jsonl transcripts preserve array and object message content', async () => 
   }
 });
 
+test('structured citations recover every split chunk through their JSON representation', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-structured-split-'));
+  try {
+    const sources = new Map([
+      ['structured.json', JSON.stringify({ messages: [{ content: { greeting: 'olá 😀', escaped: 'quote " and \\ slash', lines: ['一', '二', '三'] } }] }, null, 2)],
+      ['structured.jsonl', `${JSON.stringify({ content: ['éclair 😀', { escaped: 'a\\b', glyph: '漢字' }, 'tail'] })}\n`]
+    ]);
+    for (const [name, source] of sources) await writeFile(path.join(tmp, name), source);
+    const manifest = await inspect({ input: tmp, maxChunkLines: 1, maxChunkChars: 24 });
+    assert.ok(manifest.chunks.length > sources.size);
+    for (const chunk of manifest.chunks) {
+      assert.equal(chunk.citation.representation, 'json');
+      const selected = Buffer.from(sources.get(chunk.sourcePath)!).subarray(chunk.citation.startOffset, chunk.citation.endOffset).toString('utf8');
+      const value = JSON.parse(selected) as unknown;
+      const normalized = Array.isArray(value) ? value.map((item) => typeof item === 'string' ? item : JSON.stringify(item)).join('\n') : JSON.stringify(value, null, 2);
+      assert.equal(normalized.slice(chunk.citation.representationStartOffset, chunk.citation.representationEndOffset), chunk.text);
+    }
+    assert.equal((await verifyManifest(manifest)).ok, true);
+    const chunk = manifest.chunks[0]!;
+    const widened = { ...manifest, chunks: [{ ...chunk, citation: { ...chunk.citation, startOffset: Math.max(0, chunk.citation.startOffset - 1) } }] };
+    assert.equal((await verifyManifest(widened)).ok, false);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
 test('verification rejects incorrect json citation offsets', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-json-'));
   try {
