@@ -2,6 +2,8 @@
 
 A local-first context manager for agent sessions. It turns transcripts, notes, and tool traces into a deterministic manifest of retrievable chunks with citations back to exact files, line ranges, byte offsets, and hashes.
 
+Citation offsets are zero-based UTF-8 byte ranges `[startOffset, endOffset)`. For plain text and JSON string content, selecting that range recovers the chunk directly (JSON strings require normal JSON string unescaping). Structured JSON array/object content uses `citation.representation: "json"`: parse the selected range as JSON, normalize it with the same deterministic array/object mapping used during inspection, then select `[representationStartOffset, representationEndOffset)` from that normalized text. Verification requires that exact mapping; enclosing or widened JSON ranges are rejected.
+
 Citation offsets are zero-based, half-open UTF-8 byte offsets into the original source file. Read the source as bytes and select `[startOffset, endOffset)` to recover the cited representation.
 
 Think of it as a small loom for long context: feed it local files, get back a plain JSON index another agent, CLI, or editor plugin can trust.
