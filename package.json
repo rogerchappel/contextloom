@@ -4,7 +4,7 @@
   "description": "Local-first context manager for lossless agent transcripts with retrievable cited chunks.",
   "type": "module",
   "bin": {
-    "contextloom": "./dist/src/cli.js"
+    "contextloom": "dist/src/cli.js"
   },
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
