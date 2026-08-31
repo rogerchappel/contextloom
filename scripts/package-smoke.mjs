@@ -2,10 +2,23 @@
 
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { isDeepStrictEqual } from "node:util";
 import os from "node:os";
 import path from "node:path";
 
 const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+const packageLock = JSON.parse(await readFile("package-lock.json", "utf8"));
+const lockRoot = packageLock.packages?.[""];
+
+for (const field of ["name", "version", "bin"]) {
+  if (!isDeepStrictEqual(lockRoot?.[field], packageJson[field])) {
+    throw new Error(
+      `package-lock.json root ${field} metadata does not match package.json: ` +
+        `${JSON.stringify(lockRoot?.[field])} !== ${JSON.stringify(packageJson[field])}`,
+    );
+  }
+}
+
 const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), "contextloom-package-smoke-"));
 
 try {
