@@ -44,7 +44,8 @@ node dist/src/cli.js verify out/sample/manifest.json
 
 When `--output` is inside the input directory, `inspect` excludes that output
 directory from its sources. Repeating the command therefore does not index its
-previously generated manifests.
+previously generated manifests. Other directories named `out` or `dist` remain
+ordinary input directories and their supported files are indexed.
 
 ## CLI
 
