@@ -34,7 +34,7 @@ const cited = source
   .toString('utf8');
 ```
 
-For string-valued JSON and JSONL transcript fields, the offsets delimit the encoded string contents in the source: decode `cited` as a JSON string to recover the chunk text. For array- or object-valued content, they delimit the complete encoded JSON value, which deterministically produces the cited chunk text. This keeps citations exact even when content contains JSON escapes such as `\\n`, `\\"`, `\\\\`, or `\\u2603`, and when decoded text contains multibyte characters. The source hash preserves whole-file integrity.
+For string-valued JSON and JSONL transcript fields, the offsets delimit the encoded string contents in the exact `content`, `text`, or `message` property selected for that transcript message: decode `cited` as a JSON string to recover the chunk text. An earlier metadata or nested property with the same JSON value is never cited in its place. For array- or object-valued content, the offsets delimit the complete encoded message-property value, which deterministically produces the cited chunk text. This keeps citations exact even when content contains JSON escapes such as `\\n`, `\\"`, `\\\\`, or `\\u2603`, and when decoded text contains multibyte characters. Verification checks both the recovered text and its association with the selected message property, so equal-valued or widened ranges are rejected. The source hash preserves whole-file integrity.
 
 ## Stability
 
