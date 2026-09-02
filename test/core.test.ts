@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { inspect, searchManifest, findChunk, verifyManifest } from '../src/index.js';
@@ -107,6 +107,21 @@ test('inspect excludes a nested output directory on repeated runs', async () => 
     assert.deepEqual(second.stats, first.stats);
     assert.equal(second.stats.sourceCount, 1);
     assert.equal(second.sources[0]?.relativePath, 'notes.md');
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
+test('inspect retains supported files in ordinary out and dist directories', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-named-directories-'));
+  try {
+    await mkdir(path.join(tmp, 'out'), { recursive: true });
+    await mkdir(path.join(tmp, 'dist'), { recursive: true });
+    await writeFile(path.join(tmp, 'out', 'notes.md'), '# Output notes\n');
+    await writeFile(path.join(tmp, 'dist', 'session.txt'), 'Distribution session\n');
+
+    const manifest = await inspect({ input: tmp, output: path.join(tmp, 'result') });
+    assert.deepEqual(manifest.sources.map((source) => source.relativePath), ['dist/session.txt', 'out/notes.md']);
   } finally {
     await rm(tmp, { recursive: true, force: true });
   }
