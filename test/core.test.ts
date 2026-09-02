@@ -145,6 +145,49 @@ test('json citations track escaped content across chunks', async () => {
   }
 });
 
+test('json citations select the message field when metadata repeats its value', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-json-duplicate-'));
+  try {
+    const source = JSON.stringify({ duplicate: 'same text', messages: [{ label: 'same text', role: 'user', content: 'same text' }] });
+    await writeFile(path.join(tmp, 'duplicate.json'), source);
+    const manifest = await inspect({ input: tmp });
+    const chunk = manifest.chunks[0]!;
+    const expectedStart = source.lastIndexOf('same text');
+    assert.equal(chunk.citation.startOffset, expectedStart);
+    assert.equal(chunk.citation.endOffset, expectedStart + Buffer.byteLength('same text'));
+    assert.equal((await verifyManifest(manifest)).ok, true);
+    const widened = { ...manifest, chunks: [{ ...chunk, citation: { ...chunk.citation, startOffset: source.indexOf('same text'), endOffset: source.indexOf('same text') + Buffer.byteLength('same text') } }] };
+    assert.equal((await verifyManifest(widened)).ok, false);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
+test('jsonl citations select content, text, and message fields over equal nested values', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-jsonl-duplicate-'));
+  try {
+    const rows = [
+      { metadata: { value: 'content duplicate' }, content: 'content duplicate' },
+      { label: 'text duplicate', text: 'text duplicate' },
+      { earlier: ['message duplicate'], message: 'message duplicate' }
+    ];
+    const source = `${rows.map((row) => JSON.stringify(row)).join('\n')}\n`;
+    await writeFile(path.join(tmp, 'duplicate.jsonl'), source);
+    const manifest = await inspect({ input: tmp });
+    assert.equal(manifest.chunks.length, 3);
+    let searchFrom = 0;
+    for (const [index, field] of ['content', 'text', 'message'].entries()) {
+      const marker = `\"${field}\":\"`;
+      const fieldStart = source.indexOf(marker, searchFrom) + marker.length;
+      assert.equal(manifest.chunks[index]!.citation.startOffset, fieldStart);
+      searchFrom = fieldStart;
+    }
+    assert.equal((await verifyManifest(manifest)).ok, true);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
 test('json transcripts preserve mixed structured message content and citations', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-structured-json-'));
   try {
