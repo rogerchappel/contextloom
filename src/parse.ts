@@ -14,6 +14,12 @@ interface JsonMessage { role?: unknown; content?: unknown; text?: unknown; messa
 interface ValueRange { start: number; end: number; value: unknown; }
 
 function messageValue(value: JsonMessage): unknown { return value.content ?? value.text ?? value.message; }
+function messageField(value: JsonMessage): 'content' | 'text' | 'message' | undefined {
+  if (value.content != null) return 'content';
+  if (value.text != null) return 'text';
+  if (value.message != null) return 'message';
+  return undefined;
+}
 function textFromValue(value: unknown): string | undefined {
   if (typeof value === 'string') return value;
   if (Array.isArray(value)) return value.map((item) => typeof item === 'string' ? item : JSON.stringify(item)).join('\n');
@@ -56,6 +62,26 @@ function jsonValueRanges(text: string): ValueRange[] {
   return ranges;
 }
 function sameJson(left: unknown, right: unknown): boolean { return JSON.stringify(left) === JSON.stringify(right); }
+function messageRange(text: string, ranges: ValueRange[], message: JsonMessage, searchFrom = 0): ValueRange | undefined {
+  const objectRange = ranges.find((item) => item.start >= searchFrom && sameJson(item.value, message));
+  const field = messageField(message);
+  if (!objectRange || !field) return undefined;
+  const keyBeforeValue = new RegExp(`${JSON.stringify(field)}\\s*:\\s*$`, 'u');
+  return ranges.find((item) => item.start > objectRange.start && item.end <= objectRange.end && sameJson(item.value, messageValue(message)) && keyBeforeValue.test(text.slice(objectRange.start, item.start)));
+}
+export function isMessageFieldRange(text: string, start: number, end: number): boolean {
+  const ranges = jsonValueRanges(text);
+  for (const item of ranges) {
+    if (!item.value || typeof item.value !== 'object' || Array.isArray(item.value)) continue;
+    const message = item.value as JsonMessage;
+    if (!messageField(message)) continue;
+    const valueRange = messageRange(text, ranges, message, item.start);
+    if (!valueRange) continue;
+    if (typeof messageValue(message) === 'string' && start >= valueRange.start + 1 && end <= valueRange.end - 1) return true;
+    if (typeof messageValue(message) !== 'string' && start === valueRange.start && end === valueRange.end) return true;
+  }
+  return false;
+}
 function stringBoundaries(raw: string): number[] { const boundaries = [0]; let rawOffset = 0; let decodedOffset = 0; while (rawOffset < raw.length) { const escaped = raw[rawOffset] === '\\'; const rawLength = escaped ? (raw[rawOffset + 1] === 'u' ? 6 : 2) : ((raw.codePointAt(rawOffset) ?? 0) > 0xffff ? 2 : 1); const decoded = JSON.parse(`"${raw.slice(rawOffset, rawOffset + rawLength)}"`) as string; for (let index = 1; index <= decoded.length; index += 1) boundaries[decodedOffset + index] = rawOffset + Math.ceil(rawLength * index / decoded.length); decodedOffset += decoded.length; rawOffset += rawLength; } return boundaries; }
 function mappedSpans(source: string, message: JsonMessage, range: ValueRange, maxLines: number, maxChars: number, byteBase = 0, lineBase = 0): ParsedSpan[] {
   const value = messageValue(message);
@@ -86,7 +112,7 @@ function parseJson(text: string, maxLines: number, maxChars: number): ParsedSpan
     if (messages.length === 0) return rawSpans(text, maxLines, maxChars);
     const ranges = jsonValueRanges(text); let searchFrom = 0;
     return messages.flatMap((message) => {
-      const range = ranges.find((item) => item.start >= searchFrom && sameJson(item.value, messageValue(message)));
+      const range = messageRange(text, ranges, message, searchFrom);
       if (!range) return [];
       searchFrom = range.end;
       return mappedSpans(text, message, range, maxLines, maxChars);
@@ -100,7 +126,8 @@ function parseJsonl(text: string, maxLines: number, maxChars: number): ParsedSpa
     if (trimmed) {
       try {
         const message = JSON.parse(trimmed) as JsonMessage;
-        const range = jsonValueRanges(trimmed).find((item) => sameJson(item.value, messageValue(message)));
+        const ranges = jsonValueRanges(trimmed);
+        const range = messageRange(trimmed, ranges, message);
         if (range) spans.push(...mappedSpans(trimmed, message, range, maxLines, maxChars, byteBase + byteOffset(line, leading), offsetToLine(lineStarts(text), charBase + leading) - 1));
       } catch {
         for (const span of rawSpans(trimmed, maxLines, maxChars)) spans.push({ ...span, startOffset: byteBase + byteOffset(line, leading) + span.startOffset, endOffset: byteBase + byteOffset(line, leading) + span.endOffset });
