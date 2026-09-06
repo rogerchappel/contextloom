@@ -82,6 +82,10 @@ const results = searchManifest(manifest, 'deployment decision', 3);
 const verified = await verifyManifest(manifest);
 ```
 
+Verification rejects chunks whose `sourceId` is absent from `manifest.sources`.
+`checkedChunks` counts only chunks whose source, hash, and citation were actually
+checked; orphan chunks are reported by both chunk id and missing source id.
+
 Directory inputs can be filtered with `include`. Patterns use `/`-separated paths relative to the input root: `*` and `?` do not cross a directory separator, while `**` does. A pattern without `/` matches a file name at any depth. Single-file inputs match against their file name. An empty array includes no files.
 
 ```ts

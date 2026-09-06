@@ -53,4 +53,7 @@ to disambiguate them.
 contextloom verify out/sample/manifest.json
 ```
 
-Re-reads source files, checks source hashes, checks chunk hashes, and confirms chunk text is recoverable from the original source.
+Re-reads source files, checks source hashes, checks chunk hashes, and confirms
+chunk text is recoverable from the original source. Verification fails with an
+orphan-chunk diagnostic when a chunk references a source id missing from the
+manifest source list, and its checked-chunk total excludes those orphan chunks.
