@@ -95,6 +95,27 @@ test('written manifests verify against original sources', async () => {
   }
 });
 
+test('verify rejects chunks when the manifest has no matching sources', async () => {
+  const manifest = await inspect({ input: fixture });
+  const result = await verifyManifest({ ...manifest, sources: [] });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.checkedChunks, 0);
+  assert.equal(result.errors.length, manifest.chunks.length);
+  assert.match(result.errors[0]!, /orphan chunk chunk-0001 references missing source src-0001/);
+});
+
+test('verify reports an orphan alongside chunks checked against valid sources', async () => {
+  const manifest = await inspect({ input: fixture });
+  const validChunk = manifest.chunks[0]!;
+  const orphan = { ...validChunk, id: 'chunk-orphan', sourceId: 'src-missing' };
+  const result = await verifyManifest({ ...manifest, chunks: [...manifest.chunks, orphan] });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.checkedChunks, manifest.chunks.length);
+  assert.deepEqual(result.errors, ['orphan chunk chunk-orphan references missing source src-missing']);
+});
+
 test('inspect excludes a nested output directory on repeated runs', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-nested-output-'));
   try {
