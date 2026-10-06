@@ -31,8 +31,10 @@ try {
   const packedFiles = new Set(packument.files.map((file) => file.path));
   const requiredFiles = new Set(["README.md", "LICENSE"]);
 
-  if (packageJson.main) {
-    requiredFiles.add(packageJson.main.replace(/^\.\//, ""));
+  for (const entry of [packageJson.main, packageJson.types]) {
+    if (entry) {
+      requiredFiles.add(entry.replace(/^\.\//, ""));
+    }
   }
 
   const binEntries =
