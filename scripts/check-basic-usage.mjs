@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 
 const example = await readFile("examples/basic-usage.md", "utf8");
@@ -15,6 +15,12 @@ const commands = shellBlock[1]
   .split("\n")
   .map((line) => line.trim())
   .filter((line) => line.startsWith("node "));
+const timeoutMs = Number(process.env.BASIC_USAGE_TIMEOUT_MS ?? 10_000);
+
+if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0) {
+  console.error("Basic usage check failed: BASIC_USAGE_TIMEOUT_MS must be a positive integer.");
+  process.exit(1);
+}
 
 if (commands.length !== 4) {
   console.error(`Basic usage check failed: expected 4 CLI commands, found ${commands.length}.`);
@@ -29,10 +35,44 @@ for (const command of commands) {
   }
 
   console.log(`> ${command}`);
-  const result = spawnSync(args[0], args.slice(1), { stdio: "inherit" });
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
-  }
+  const exitCode = await new Promise((resolve) => {
+    let settled = false;
+    let timer;
+    const finish = (code) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(code);
+    };
+
+    let child;
+    try {
+      child = spawn(args[0], args.slice(1), { stdio: "inherit" });
+    } catch (error) {
+      console.error(`Basic usage check failed: could not spawn ${args[0]}: ${error.message}`);
+      finish(1);
+      return;
+    }
+
+    timer = setTimeout(() => {
+      console.error(`Basic usage check failed: command timed out after ${timeoutMs}ms: ${command}`);
+      child.kill("SIGTERM");
+      finish(1);
+    }, timeoutMs);
+
+    child.once("error", (error) => {
+      console.error(`Basic usage check failed: could not run command: ${error.message}`);
+      finish(1);
+    });
+    child.once("close", (code, signal) => {
+      if (signal) {
+        console.error(`Basic usage check failed: command terminated by ${signal}: ${command}`);
+      }
+      finish(code ?? 1);
+    });
+  });
+
+  if (exitCode !== 0) process.exit(exitCode);
 }
 
 console.log("Basic usage example passed.");
