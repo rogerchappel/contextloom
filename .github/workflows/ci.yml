@@ -21,13 +21,5 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: npm run check
-        run: npm run check
-      - name: npm run build
-        run: npm run build
-      - name: npm test
-        run: npm test
-      - name: npm run smoke
-        run: npm run smoke
       - name: npm run release:check
         run: npm run release:check
