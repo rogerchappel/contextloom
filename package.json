@@ -27,7 +27,7 @@
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true});require('node:fs').rmSync('out',{recursive:true,force:true})\"",
     "build": "tsc -p tsconfig.json",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test dist/**/*.test.js",
+    "test": "node --test dist/test/*.test.js",
     "pretest": "npm run build",
     "smoke": "npm run build && node dist/src/cli.js inspect fixtures/sample --output out/sample --format json && node dist/src/cli.js search out/sample/manifest.json decisions --limit 3 && node dist/src/cli.js show out/sample/manifest.json chunk-0001 --format markdown && node dist/src/cli.js verify out/sample/manifest.json",
     "docs:check": "npm run build && node scripts/check-basic-usage.mjs",
