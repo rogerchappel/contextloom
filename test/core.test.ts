@@ -83,6 +83,17 @@ test('findChunk rejects ambiguous hash prefixes without shadowing exact ids', as
   assert.throws(() => findChunk({ ...ambiguous, chunks: ambiguous.chunks.map((chunk, index) => index === 1 ? { ...chunk, id: 'other' } : chunk) }, 'abc'), /ambiguous chunk hash prefix: abc matches 2 chunks/);
 });
 
+test('verify rejects malformed citation offsets', async () => {
+  const manifest = await inspect({ input: fixture });
+  const first = manifest.chunks[0]!;
+  for (const offsets of [{ startOffset: -1, endOffset: first.citation.endOffset }, { startOffset: first.citation.endOffset, endOffset: first.citation.startOffset }, { startOffset: first.citation.startOffset, endOffset: Number.MAX_SAFE_INTEGER }]) {
+    const malformed = { ...manifest, chunks: manifest.chunks.map((chunk) => chunk.id === first.id ? { ...chunk, citation: { ...chunk.citation, ...offsets } } : chunk) };
+    const result = await verifyManifest(malformed);
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.some((error) => error.includes(`invalid chunk citation offsets: ${first.id}`)));
+  }
+});
+
 test('written manifests verify against original sources', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-'));
   try {
