@@ -14,6 +14,8 @@ Agent work often lives in long chat logs and noisy tool output. Summaries are us
 
 ## Install
 
+Supported runtimes are Node.js 20 and 22. The package engine range is `>=20 <23`; CI tests both supported major versions. Node.js 23 and later are not currently declared supported.
+
 ```sh
 npm install
 npm run build
