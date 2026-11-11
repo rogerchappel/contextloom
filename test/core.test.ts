@@ -286,6 +286,28 @@ test('structured citations recover every split chunk through their JSON represen
   }
 });
 
+test('structured JSON verification rejects widened and shifted byte ranges', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-structured-offsets-'));
+  try {
+    const source = JSON.stringify({ messages: [{ content: { text: 'café 😀', metadata: { note: 'same' } } }] }, null, 2);
+    await writeFile(path.join(tmp, 'structured.json'), source);
+    const manifest = await inspect({ input: tmp, maxChunkChars: 8 });
+    assert.ok(manifest.chunks.length > 1);
+    assert.equal((await verifyManifest(manifest)).ok, true);
+    const chunk = manifest.chunks[0]!;
+    for (const citation of [
+      { ...chunk.citation, endOffset: chunk.citation.endOffset + 1 },
+      { ...chunk.citation, startOffset: chunk.citation.startOffset + 1 },
+      { ...chunk.citation, representationStartOffset: (chunk.citation.representationStartOffset ?? 0) + 1 }
+    ]) {
+      const malformed = { ...manifest, chunks: [{ ...chunk, citation }] };
+      assert.equal((await verifyManifest(malformed)).ok, false);
+    }
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
 test('verification rejects incorrect json citation offsets', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-json-'));
   try {
