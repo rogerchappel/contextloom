@@ -408,3 +408,24 @@ test('maxChunkChars splits overlong lines with exact UTF-8 byte citations', asyn
     await rm(tmp, { recursive: true, force: true });
   }
 });
+
+test('truncated structured input falls back to deterministic raw citations', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-truncated-'));
+  try {
+    const source = '{"messages":[{"role":"user","content":"unfinished citation';
+    await writeFile(path.join(tmp, 'truncated.json'), source);
+
+    const first = await inspect({ input: tmp });
+    const second = await inspect({ input: tmp });
+    assert.deepEqual(second.chunks, first.chunks);
+    assert.equal(first.chunks.length, 1);
+    assert.equal(first.chunks[0]?.text, source);
+    assert.equal(first.chunks[0]?.citation.startOffset, 0);
+    assert.equal(first.chunks[0]?.citation.endOffset, Buffer.byteLength(source));
+    const verification = await verifyManifest(first);
+    assert.equal(verification.ok, false);
+    assert.ok(verification.errors.some((error) => error.includes('chunk citation does not match source')));
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
