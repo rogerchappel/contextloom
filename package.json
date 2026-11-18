@@ -46,7 +46,7 @@
   "author": "Roger Chappel",
   "license": "MIT",
   "engines": {
-    "node": ">=20"
+    "node": ">=20 <23"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",
