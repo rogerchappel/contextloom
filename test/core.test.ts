@@ -45,6 +45,32 @@ test('inspect preserves single-file paths in sources and citations', async () =>
   assert.equal((await verifyManifest(manifest)).ok, true);
 });
 
+test('multiline JSON transcript chunks cite their individual content boundaries', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-json-lines-'));
+  try {
+    const input = path.join(tmp, 'transcript.json');
+    const content = 'first line\nsecond line\nthird line';
+    const source = JSON.stringify({ messages: [{ role: 'user', content }] }, null, 2);
+    await writeFile(input, source);
+    const manifest = await inspect({ input, maxChunkLines: 1 });
+    assert.equal(manifest.chunks.length, 3);
+    const expected = ['first line', 'second line', 'third line'];
+    for (const [index, text] of expected.entries()) {
+      const chunk = manifest.chunks[index]!;
+      const start = source.indexOf(text);
+      assert.equal(chunk.text, text);
+      assert.equal(chunk.citation.startOffset, Buffer.byteLength(source.slice(0, start)));
+      assert.equal(chunk.citation.endOffset, Buffer.byteLength(source.slice(0, start + text.length)));
+      assert.equal(chunk.citation.startLine, source.slice(0, start).split('\n').length);
+      assert.equal(chunk.citation.endLine, chunk.citation.startLine);
+      assert.equal(chunk.sha256, (await import('../src/hash.js')).sha256(text));
+    }
+    assert.equal((await verifyManifest(manifest)).ok, true);
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
 test('inspect extracts roles from json transcripts', async () => {
   const manifest = await inspect({ input: fixture });
   const branchChunk = manifest.chunks.find((chunk) => chunk.text.includes('branch protection blocker'));
