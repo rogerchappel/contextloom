@@ -435,6 +435,34 @@ test('maxChunkChars splits overlong lines with exact UTF-8 byte citations', asyn
   }
 });
 
+test('valid JSON preserves citations around delimiter-like message content', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-delimiters-'));
+  try {
+    const source = JSON.stringify({ messages: [
+      { role: 'user', content: 'text with { [ and closers } ] but still a string' },
+      { role: 'assistant', content: ['array starts {', { text: 'embedded } ] delimiters' }, 'array ends ]'] },
+      { role: 'tool', content: { text: 'object value with } and ]', nested: { ok: true } } }
+    ] }, null, 2);
+    await writeFile(path.join(tmp, 'delimiters.json'), source);
+    const manifest = await inspect({ input: tmp });
+    assert.equal(manifest.chunks.length, 3);
+    assert.deepEqual(manifest.chunks.map((chunk) => chunk.role), ['user', 'assistant', 'tool']);
+    assert.equal((await verifyManifest(manifest)).ok, true);
+    for (const chunk of manifest.chunks) {
+      const selected = Buffer.from(source).subarray(chunk.citation.startOffset, chunk.citation.endOffset).toString('utf8');
+      if (chunk.citation.representation === 'json') {
+        const value = JSON.parse(selected) as unknown;
+        const normalized = Array.isArray(value) ? value.map((item) => typeof item === 'string' ? item : JSON.stringify(item)).join('\n') : JSON.stringify(value, null, 2);
+        assert.equal(normalized.slice(chunk.citation.representationStartOffset, chunk.citation.representationEndOffset), chunk.text);
+      } else {
+        assert.equal(JSON.parse(`"${selected}"`), chunk.text);
+      }
+    }
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
+  }
+});
+
 test('truncated structured input falls back to deterministic raw citations', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'contextloom-truncated-'));
   try {
